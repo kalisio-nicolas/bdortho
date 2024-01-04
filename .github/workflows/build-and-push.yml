@@ -76,7 +76,6 @@ jobs:
             echo "Error: $RESPONSE"
             exit 1
           fi
-        shell: /usr/bin/bash -e {0}
       
       # Create a new tag with the extracted version and push it to the repository
       - name: Create and Push Tag to GitHub Repository
