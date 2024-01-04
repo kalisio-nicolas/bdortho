@@ -44,16 +44,23 @@ jobs:
           VERSION=$(cat ./chart/Chart.yaml | grep version | awk '{print $2}' | tr -d '[:space:]')
           CHART_FILE=$(find . -name '*.tgz' -print -quit)
           CHART_NAME=$(echo "$CHART_FILE" | sed 's/-[0-9]\+\.[0-9]\+\.[0-9]\+\.tgz$//')
-          RESPONSE=$(curl -s --data-binary "@${CHART_FILE}" http://${{ secrets.HELM_REPO }}/api/charts)
+          RESPONSE=$(curl -s --data-binary "@${CHART_FILE}" \
+                    --url "http://${{ secrets.HELM_REPO }}/api/charts" \
+                    --header "Authorization: Basic ${{ secrets.HELM_REPO_AUTH }}")
+
 
           if [[ $RESPONSE == '{"saved":true}' ]]; then
             echo "Chart successfully published."
           elif [[ $RESPONSE == '{"error":"file already exists"}' ]]; then
             echo "Chart already exists. Deleting and republishing..."
-            DELETE_RESPONSE=$(curl -s -X DELETE "http://${{ secrets.HELM_REPO }}/api/charts/$CHART_NAME/$VERSION")
+            DELETE_RESPONSE=$(curl -s -X DELETE "http://${{ secrets.HELM_REPO }}/api/charts/$CHART_NAME/$VERSION" \
+                              --header "Authorization: Basic ${{ secrets.HELM_REPO_AUTH }}")
+
             if [[ $DELETE_RESPONSE == '{"deleted":true}' ]]; then
               echo "Chart successfully deleted."
-              RESPONSE=$(curl -s --data-binary "@${CHART_FILE}" http://${{ secrets.HELM_REPO }}/api/charts)
+              RESPONSE=$(curl -s --data-binary "@${CHART_FILE}" \
+                    --url "http://${{ secrets.HELM_REPO }}/api/charts" \
+                    --header "Authorization: Basic ${{ secrets.HELM_REPO_AUTH }}")
       
               if [[ $RESPONSE == '{"saved":true}' ]]; then
                 echo "Chart successfully published."
