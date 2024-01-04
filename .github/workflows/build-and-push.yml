@@ -44,9 +44,13 @@ jobs:
           VERSION=$(cat ./chart/Chart.yaml | grep version | awk '{print $2}' | tr -d '[:space:]')
           CHART_FILE=$(find . -name '*.tgz' -print -quit)
           CHART_NAME=$(echo "$CHART_FILE" | sed 's/-[0-9]\+\.[0-9]\+\.[0-9]\+\.tgz$//')
+          echo "curl -s --data-binary \"@${CHART_FILE}\" \
+                    --url \"http://${{ secrets.HELM_REPO }}/api/charts\" \
+                    --header \"Authorization: Basic ${{ secrets.HELM_REPO_AUTH }}\""
+                    
           RESPONSE=$(curl -s --data-binary "@${CHART_FILE}" \
-                    --url "http://${{ secrets.HELM_REPO }}/api/charts")
-                    # --header "Authorization: Basic ${{ secrets.HELM_REPO_AUTH }}")
+                    --url "http://${{ secrets.HELM_REPO }}/api/charts" \
+                    --header "Authorization: Basic ${{ secrets.HELM_REPO_AUTH }}")
 
 
           if [[ $RESPONSE == '{"saved":true}' ]]; then
