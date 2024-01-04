@@ -2,34 +2,47 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: bdortho-update
+  namespace: {{ .Release.Namespace }}
 spec:
-  schedule: "0 0 * * *"
+  schedule: {{ $.Values.master.schedule }}
   concurrencyPolicy : Forbid
-  failedJobsHistoryLimit: 1
-  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: {{ $.Values.master.failedJobsHistoryLimit }}
+  successfulJobsHistoryLimit: {{ $.Values.master.successfulJobsHistoryLimit }}
   jobTemplate:
     spec:
-      backoffLimit: 0
+      backoffLimit: {{ $.Values.master.backoffLimit }}
+      ttlSecondsAfterFinished: {{ .Values.master.autoRemoveJobAfter | default 172800 }} # 2 days
       template:
         spec:
           restartPolicy: Never
+          securityContext:
+            {{- if .Values.securityContext }} # Override allowed
+            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- else }}
+            runAsNonRoot: true
+            runAsUser: 1000 
+            {{- end }}
+          {{- with .Values.global.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           containers:
           - name: bdortho-update
-            image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}
-            imagePullPolicy: {{ $.Values.image.pullPolicy }}
+            image: {{ $.Values.global.repository }}:{{ $.Values.global.tag | default "latest" }}
+            imagePullPolicy: {{ $.Values.global.pullPolicy }}
             env:
             - name: ROLE
               value: "master"
             - name: TTS
-              value: {{ $.Values.TTS }}
+              value: {{ $.Values.global.TTS }}
             - name: TimeZone
-              value: {{ $.Values.TimeZone }}
+              value: {{ $.Values.global.TimeZone }}
             - name: VOLUMES
               value: "/mnt"
             - name: BDORTHO_BUCKET
-              value: {{ $.Values.BDORTHO_BUCKET}}
+              value: {{ $.Values.global.BDORTHO_BUCKET}}
             - name: BDORTHO_SLACK_URL
-              value: {{ $.Values.BDORTHO_SLACK_URL }}
+              value: {{ $.Values.global.BDORTHO_SLACK_URL }}
             volumeMounts:
             - name: bdortho-bucket
               mountPath: /bucket

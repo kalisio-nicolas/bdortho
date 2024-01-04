@@ -35,7 +35,11 @@ jobs:
           chmod +x get_helm.sh
           ./get_helm.sh
 
-      - name: Build Helm Chart
+      - name : check helm chart
+        run: |
+          helm lint ./chart
+
+      - name: package Helm Chart
         run: helm package ./chart -d .
 
       - name: Publish Helm Chart to ChartMuseum

@@ -11,8 +11,8 @@ spec:
     - ReadWriteMany
   resources:
     requests:
-      storage: 50Gi
-  storageClassName: nfs-csi
+      storage: {{ $.Values.worker.storageSize }}Gi
+  storageClassName: {{ $.Values.global.storageClass }}
   volumeMode: Filesystem
 ---
 {{- end }}

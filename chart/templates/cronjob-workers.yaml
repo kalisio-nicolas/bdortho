@@ -22,29 +22,27 @@ spec:
             kubernetes.io/hostname: {{ $nodeName }}
           containers:
           - name: bd-ortho-{{ $nodeName }}-container
-            image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}
-            imagePullPolicy: {{ $.Values.image.pullPolicy }}
-            resources:
-              requests:
-                memory: "11Gi"
-                cpu: "3000m"
+            image: {{ $.Values.global.repository }}:{{ $.Values.global.tag }}
+            imagePullPolicy: {{ $.Values.global.pullPolicy }}
             env:
             - name: BDORTHO_HOSTNAME
               value: {{ $nodeName }}
             - name: BDORTHO_BUCKET
-              value:  {{ $.Values.BDORTHO_BUCKET }}
+              value:  {{ $.Values.global.BDORTHO_BUCKET }}
             - name: ROLE
               value: "worker"
             - name: TTS
               value: {{ $.Values.TTS }}
             - name: TimeZone
-              value: {{ $.Values.TimeZone }}
+              value: {{ $.Values.global.TimeZone }}
             - name: JOBS
-              value: {{ $.Values.Jobs | quote }}
+              value: {{ $.Values.worker.jobs | quote }}
             - name: BDORTHO_SLACK_URL
-              value: {{ $.Values.BDORTHO_SLACK_URL }}
+              value: {{ $.Values.global.BDORTHO_SLACK_URL }}
             - name: VOLUMES
               value: "/data"
+
+
 
             volumeMounts:
             - name: {{ $nodeName }}-bdortho-data
