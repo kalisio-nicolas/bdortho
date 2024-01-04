@@ -1,0 +1,63 @@
+{{- $nodeNames := .Values.nodeNames }}
+{{- range $nodeName := $nodeNames }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: bd-ortho-{{ $nodeName }}-cronjob
+spec:
+  schedule: "0 22 * * *"
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app: bd-ortho-{{ $nodeName }}-pod
+        spec:
+          restartPolicy: Never
+          nodeSelector:
+            kubernetes.io/hostname: {{ $nodeName }}
+          containers:
+          - name: bd-ortho-{{ $nodeName }}-container
+            image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}
+            imagePullPolicy: {{ $.Values.image.pullPolicy }}
+            resources:
+              requests:
+                memory: "11Gi"
+                cpu: "3000m"
+            env:
+            - name: BDORTHO_HOSTNAME
+              value: {{ $nodeName }}
+            - name: BDORTHO_BUCKET
+              value:  {{ $.Values.BDORTHO_BUCKET }}
+            - name: ROLE
+              value: "worker"
+            - name: TTS
+              value: {{ $.Values.TTS }}
+            - name: TimeZone
+              value: {{ $.Values.TimeZone }}
+            - name: JOBS
+              value: {{ $.Values.Jobs | quote }}
+            - name: BDORTHO_SLACK_URL
+              value: {{ $.Values.BDORTHO_SLACK_URL }}
+            - name: VOLUMES
+              value: "/data"
+
+            volumeMounts:
+            - name: {{ $nodeName }}-bdortho-data
+              mountPath: /data
+            - name: bdortho-bucket
+              mountPath: /bucket
+
+          volumes:
+          - name: {{ $nodeName }}-bdortho-data
+            persistentVolumeClaim:
+              claimName: {{ $nodeName }}-bdortho-pvc
+          - name: bdortho-bucket
+            persistentVolumeClaim:
+              claimName: bdortho-bucket-pvc
+--- # Necessary to create multiple cronjobs
+{{- end }}

@@ -1,0 +1,21 @@
+# mychart/values.yaml
+
+nodeNames:
+  - "node1"
+  - "node2"
+
+TimeZone : "Europe/Paris" # Time Zone to elaborate the TTS
+image:
+  repository: ""
+  tag: ""
+  pullPolicy: Always
+
+
+BDORTHO_BUCKET : ""
+BDORTHO_SLACK_URL : ""
+
+# Workers
+Jobs : 3
+
+
+

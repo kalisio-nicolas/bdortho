@@ -1,0 +1,18 @@
+{{- $nodeNames := .Values.nodeNames }}
+{{- range $nodeName := $nodeNames }}
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $nodeName }}-bdortho-pvc
+  namespace: {{ $.Release.Namespace }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: nfs-csi
+  volumeMode: Filesystem
+---
+{{- end }}

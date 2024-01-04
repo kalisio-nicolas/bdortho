@@ -1,0 +1,90 @@
+name: auto-build-and-push
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      -
+        name: Checkout Repository
+        uses: actions/checkout@v2
+
+      -
+        name: Build Docker Image
+        run: |
+          docker buildx create --use
+          docker buildx inspect
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login ghcr.io -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          VERSION=$(cat package.json | jq -r '.version')
+          docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/${{ secrets.DOCKER_USERNAME }}/bdortho:$VERSION --push .
+  
+      - name: Install Helm
+        run: |
+          curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+          chmod +x get_helm.sh
+          ./get_helm.sh
+
+      - name: Build Helm Chart
+        run: helm package ./chart -d .
+
+      - name: Publish Helm Chart to ChartMuseum
+        id: publish
+        run: |
+          VERSION=$(cat ./chart/Chart.yaml | grep version | awk '{print $2}' | tr -d '[:space:]')
+          CHART_FILE=$(find . -name '*.tgz' -print -quit)
+          CHART_NAME=$(echo "$CHART_FILE" | sed 's/-[0-9]\+\.[0-9]\+\.[0-9]\+\.tgz$//')
+          RESPONSE=$(curl -s --data-binary "@${CHART_FILE}" http://${{ secrets.HELM_REPO }}/api/charts)
+
+          if [[ $RESPONSE == '{"saved":true}' ]]; then
+            echo "Chart successfully published."
+          elif [[ $RESPONSE == '{"error":"file already exists"}' ]]; then
+            echo "Chart already exists. Deleting and republishing..."
+            DELETE_RESPONSE=$(curl -s -X DELETE "http://${{ secrets.HELM_REPO }}/api/charts/$CHART_NAME/$VERSION")
+            if [[ $DELETE_RESPONSE == '{"deleted":true}' ]]; then
+              echo "Chart successfully deleted."
+              RESPONSE=$(curl -s --data-binary "@${CHART_FILE}" http://${{ secrets.HELM_REPO }}/api/charts)
+      
+              if [[ $RESPONSE == '{"saved":true}' ]]; then
+                echo "Chart successfully published."
+              else
+                echo "Error: $RESPONSE"
+                exit 1
+              fi
+            else
+              echo "Error deleting chart: $DELETE_RESPONSE"
+              exit 1
+            fi
+          else
+            echo "Error: $RESPONSE"
+            exit 1
+          fi
+        shell: /usr/bin/bash -e {0}
+      
+      # Create a new tag with the extracted version and push it to the repository
+      - name: Create and Push Tag to GitHub Repository
+        run: |
+          VERSION=$(cat package.json | jq -r '.version')
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+      
+          # Supprimer le tag existant localement
+          git tag -d v$VERSION || true
+      
+          # Créer un nouveau tag et le pousser avec l'option --force
+          git tag v$VERSION -a -m "$VERSION"
+          git push origin v$VERSION --force
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+

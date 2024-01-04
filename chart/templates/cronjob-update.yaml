@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: bdortho-update
+spec:
+  schedule: "0 0 * * *"
+  concurrencyPolicy : Forbid
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+          - name: bdortho-update
+            image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}
+            imagePullPolicy: {{ $.Values.image.pullPolicy }}
+            env:
+            - name: ROLE
+              value: "master"
+            - name: TTS
+              value: {{ $.Values.TTS }}
+            - name: TimeZone
+              value: {{ $.Values.TimeZone }}
+            - name: VOLUMES
+              value: "/mnt"
+            - name: BDORTHO_BUCKET
+              value: {{ $.Values.BDORTHO_BUCKET}}
+            - name: BDORTHO_SLACK_URL
+              value: {{ $.Values.BDORTHO_SLACK_URL }}
+            volumeMounts:
+            - name: bdortho-bucket
+              mountPath: /bucket
+{{- $nodeNames := .Values.nodeNames }}
+{{- range $nodeName := $nodeNames }}
+            - name: {{ $nodeName }}-bdortho-data
+              mountPath: /mnt/{{ $nodeName }}
+{{- end }}
+          volumes:
+{{- range $nodeName := $nodeNames }}
+          - name: {{ $nodeName }}-bdortho-data
+            persistentVolumeClaim:
+              claimName: {{ $nodeName }}-bdortho-pvc
+{{- end }}
+          - name: bdortho-bucket
+            persistentVolumeClaim:
+              claimName: bdortho-bucket-pvc
+          
+          

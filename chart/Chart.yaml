@@ -1,0 +1,6 @@
+# mychart/Chart.yaml
+
+apiVersion: v2
+name: BDORTHO
+description: A Helm chart to process BDORTHO data 
+version: 0.1.2
