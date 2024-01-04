@@ -45,8 +45,8 @@ jobs:
           CHART_FILE=$(find . -name '*.tgz' -print -quit)
           CHART_NAME=$(echo "$CHART_FILE" | sed 's/-[0-9]\+\.[0-9]\+\.[0-9]\+\.tgz$//')
           RESPONSE=$(curl -s --data-binary "@${CHART_FILE}" \
-                    --url "http://${{ secrets.HELM_REPO }}/api/charts" \
-                    --header "Authorization: Basic ${{ secrets.HELM_REPO_AUTH }}")
+                    --url "http://${{ secrets.HELM_REPO }}/api/charts" ")
+                    # --header "Authorization: Basic ${{ secrets.HELM_REPO_AUTH }}")
 
 
           if [[ $RESPONSE == '{"saved":true}' ]]; then
@@ -76,6 +76,7 @@ jobs:
             echo "Error: $RESPONSE"
             exit 1
           fi
+        shell: /usr/bin/bash -e {0}
       
       # Create a new tag with the extracted version and push it to the repository
       - name: Create and Push Tag to GitHub Repository
