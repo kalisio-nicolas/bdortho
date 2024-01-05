@@ -37,6 +37,7 @@ jobs:
 
       - name : check helm chart
         run: |
+          helm dependency build ./chart
           helm lint ./chart
 
       - name: package Helm Chart
