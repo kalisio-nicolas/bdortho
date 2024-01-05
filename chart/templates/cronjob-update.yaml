@@ -1,10 +1,10 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: bdortho-update
+  name: {{ include "kargo.names.name" . }}-update
   namespace: {{ .Release.Namespace }}
 spec:
-  schedule: {{ $.Values.master.schedule }}
+  schedule: {{ $.Values.master.cron }}
   concurrencyPolicy : Forbid
   failedJobsHistoryLimit: {{ $.Values.master.failedJobsHistoryLimit }}
   successfulJobsHistoryLimit: {{ $.Values.master.successfulJobsHistoryLimit }}
@@ -15,34 +15,23 @@ spec:
       template:
         spec:
           restartPolicy: Never
+          {{- with .Values.podSecurityContext }}
           securityContext:
-            {{- if .Values.securityContext }} # Override allowed
-            {{- toYaml .Values.securityContext | nindent 12 }}
-            {{- else }}
-            runAsNonRoot: true
-            runAsUser: 1000 
-            {{- end }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}         
+
           {{- with .Values.global.imagePullSecrets }}
           imagePullSecrets:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           containers:
-          - name: bdortho-update
+          - name: {{ include "kargo.names.name" . }}-update
             image: {{ $.Values.global.repository }}:{{ $.Values.global.tag | default "latest" }}
             imagePullPolicy: {{ $.Values.global.pullPolicy }}
             env:
             - name: ROLE
               value: "master"
-            - name: TTS
-              value: {{ $.Values.global.TTS }}
-            - name: TimeZone
-              value: {{ $.Values.global.TimeZone }}
-            - name: VOLUMES
-              value: "/mnt"
-            - name: BDORTHO_BUCKET
-              value: {{ $.Values.global.BDORTHO_BUCKET}}
-            - name: BDORTHO_SLACK_URL
-              value: {{ $.Values.global.BDORTHO_SLACK_URL }}
+            {{- include "kargo.environment.render" (dict "env" $.Values.global.env "context" $) | indent 12 }}
             volumeMounts:
             - name: bdortho-bucket
               mountPath: /bucket

@@ -1,6 +1,19 @@
 # mychart/Chart.yaml
-
 apiVersion: v2
-name: BDORTHO
-description: A Helm chart to process BDORTHO data 
-version: 0.1.2
+name: bdortho-tools
+description: A Helm chart to deploy bdortho tools on Kubernetes
+version: 0.1.0
+appVersion: 0.1.1
+annotations:
+  category: Service
+keywords:
+  - geocoding
+  - kano
+dependencies:
+  - name: kargo
+    version: x.x.x
+    repository: oci://harbor.portal.kalisio.com/kalisio/helm
+maintainers:
+  - name: Kalisio
+    email: contact@kalisio.com
+    url: https://kalisio.com

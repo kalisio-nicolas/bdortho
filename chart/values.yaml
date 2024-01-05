@@ -1,22 +1,27 @@
 # mychart/values.yaml
 
-nodeNames:
-  - "node1"
-  - "node2"
+nodeNames: ["node1", "node2"]
+
+fullnameOverride : ""
+nameOverride: ""
 
 global:
+  secret: "default" # secret name to use for the slack webhook url
   imagePullSecrets : []
   repository: "repo/bdortho"
   tag: "latest"
   pullPolicy: Always
   storageClass: "nfs-csi"
-  TimeZone : "Europe/Paris" # Time Zone to elaborate the TTS
-  TTS : "06:00" # Time To STOP
-  BDORTHO_BUCKET : "/bucket" # Where is located the bucket (can be a local path or a remote path like s3://bucket)
-  BDORTHO_SLACK_URL : "slack_webhook_url" # Slack webhook url to send notification
+  env :
+    TIMEZONE : "Europe/Paris" # Time Zone to elaborate the TTS
+    TTS : "06:00" # Time To STOP
+    BDORTHO_SLACK_URL : 
+      key : slack-webhook-url
+    BDORTHO_BUCKET : "ovh:path/to/data/folder" # Where is located the bucket (can be a local path or a remote path like s3://bucket)
+
 
 master :
-  schedule: "0 20 * * *" # at 20:00
+  cron: "0 20 * * *" # at 20:00
   failedJobsHistoryLimit : 1
   successfulJobsHistoryLimit : 1
   backoffLimit : 0
@@ -25,11 +30,14 @@ master :
 
 worker: 
   storageSize : 50 # Gi, size of the pvc for each worker's workdir
-  schedule: "3 20 * * *" # at 20:03
+  cron: "3 20 * * *" # at 20:03
   failedJobsHistoryLimit : 1
   successfulJobsHistoryLimit : 1
   backoffLimit : 0
-  jobs : 3
+  env :
+    JOBS : "3" # Number of jobs to run in parallel
+
+
 
 
 

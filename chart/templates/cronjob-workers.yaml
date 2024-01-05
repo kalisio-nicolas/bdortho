@@ -3,46 +3,40 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: bd-ortho-{{ $nodeName }}-cronjob
+  name: {{ include "kargo.names.name" $ }}-{{ $nodeName }}-worker
 spec:
-  schedule: "0 22 * * *"
+  schedule: {{ $.Values.worker.cron }}
   concurrencyPolicy: Forbid
-  failedJobsHistoryLimit: 1
-  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: {{ $.Values.worker.failedJobsHistoryLimit | default 1 }}
+  successfulJobsHistoryLimit: {{ $.Values.worker.successfulJobsHistoryLimit | default 1 }}
   jobTemplate:
     spec:
       backoffLimit: 0
       template:
         metadata:
           labels:
-            app: bd-ortho-{{ $nodeName }}-pod
-        spec:
+            app: {{ include "kargo.names.name" $ }}-{{ $nodeName }}-pod
+        spec:   
           restartPolicy: Never
+          {{- with $.Values.podSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}     
           nodeSelector:
             kubernetes.io/hostname: {{ $nodeName }}
           containers:
-          - name: bd-ortho-{{ $nodeName }}-container
+          - name: {{ include "kargo.names.name" $ }}-{{ $nodeName }}-container
             image: {{ $.Values.global.repository }}:{{ $.Values.global.tag }}
             imagePullPolicy: {{ $.Values.global.pullPolicy }}
             env:
-            - name: BDORTHO_HOSTNAME
+            - name: HOSTNAME
               value: {{ $nodeName }}
-            - name: BDORTHO_BUCKET
-              value:  {{ $.Values.global.BDORTHO_BUCKET }}
             - name: ROLE
-              value: "worker"
-            - name: TTS
-              value: {{ $.Values.TTS }}
-            - name: TimeZone
-              value: {{ $.Values.global.TimeZone }}
-            - name: JOBS
-              value: {{ $.Values.worker.jobs | quote }}
-            - name: BDORTHO_SLACK_URL
-              value: {{ $.Values.global.BDORTHO_SLACK_URL }}
+              value: "worker"              
             - name: VOLUMES
               value: "/data"
-
-
+            {{- include "kargo.environment.render" (dict "env" $.Values.global.env "context" $) | indent 12 }}
+            {{- include "kargo.environment.render" (dict "env" $.Values.worker.env "context" $) | indent 12 }}
 
             volumeMounts:
             - name: {{ $nodeName }}-bdortho-data
