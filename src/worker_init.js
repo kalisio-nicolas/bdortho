@@ -50,7 +50,7 @@ const opts = program.opts()
 
 var current_link = null
 const ERR_CODES = {133: "Download failed", 134: "Extract failed", 135: "Transform failed", 136: "Upload failed"}
-const hostname= env.BDORTHO_HOSTNAME || os.hostname()
+const hostname= env.HOSTNAME || os.hostname()
 const slack_url = process.env.BDORTHO_SLACK_URL || console.error("BDORTHO_SLACK_URL not defined")
 
 

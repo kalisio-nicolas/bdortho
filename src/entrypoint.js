@@ -7,7 +7,7 @@ const ROLE=env.ROLE ||  console.error("ROLE not defined, exiting...") || process
 const tmpdir = env.TMPDIR || "tmp"
 const volumes = env.VOLUMES || "volumes"
 const TTS = env.TTS || console.error("TTS not defined, process will run indefinitely")
-const TimeZone = env.TimeZone || "Europe/Paris"
+const TIMEZONE = env.TIMEZONE || "Europe/Paris"
 const jobs = env.JOBS || 1
 
 
@@ -16,17 +16,17 @@ console.log("ROLE:", ROLE)
 console.log("tmpdir:", tmpdir)
 console.log("volumes:", volumes)
 console.log("TTS:", TTS)
-console.log("TimeZone:", TimeZone)
+console.log("TIMEZONE:", TIMEZONE)
 console.log("jobs:", jobs)
 
 // Calculation of the time remaining before the stop time (TTS) its format is a string "HH:MM"
-function get_time_to_stop(TTS, TimeZone) {
+function get_time_to_stop(TTS, TIMEZONE) {
     try {
-      // Get current date and time in the specified timezone
-      const now = DateTime.local().setZone(TimeZone);
+      // Get current date and time in the specified TIMEZONE
+      const now = DateTime.local().setZone(TIMEZONE);
   
-      // Get date and time for TTS in the specified timezone
-      let tts = DateTime.fromFormat(TTS, 'HH:mm', { zone: TimeZone });
+      // Get date and time for TTS in the specified TIMEZONE
+      let tts = DateTime.fromFormat(TTS, 'HH:mm', { zone: TIMEZONE });
   
       // If tts is before now, add one day
       if (tts < now) {
@@ -55,14 +55,14 @@ function stop () {
 
     process.exit(0)
 }
-console.log("Process will stop in", get_time_to_stop(TTS, TimeZone)/60, "minutes")
+console.log("Process will stop in", get_time_to_stop(TTS, TIMEZONE)/60, "minutes")
 
 process.on('SIGTERM', stop);
 
 if (env.TTS){
-    setTimeout(stop, get_time_to_stop(TTS, TimeZone)*1000)
+    setTimeout(stop, get_time_to_stop(TTS, TIMEZONE)*1000)
     const interval=setInterval(() => {
-        console.log("Process will stop in", get_time_to_stop(TTS, TimeZone)/60, "minutes")
+        console.log("Process will stop in", get_time_to_stop(TTS, TIMEZONE)/60, "minutes")
     }, 1000*60*5)
     
 }
