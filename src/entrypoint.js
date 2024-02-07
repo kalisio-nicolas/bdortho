@@ -10,6 +10,8 @@ const TTS = env.TTS || console.error("TTS not defined, process will run indefini
 const TIMEZONE = env.TIMEZONE || "Europe/Paris"
 const jobs = env.JOBS || 1
 
+var interval = null
+
 
 console.log("Starting process with args:")
 console.log("ROLE:", ROLE)
@@ -61,7 +63,7 @@ process.on('SIGTERM', stop);
 
 if (env.TTS){
     setTimeout(stop, get_time_to_stop(TTS, TIMEZONE)*1000)
-    const interval=setInterval(() => {
+    interval=setInterval(() => {
         console.log("Process will stop in", get_time_to_stop(TTS, TIMEZONE)/60, "minutes")
     }, 1000*60*5)
     

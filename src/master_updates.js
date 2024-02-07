@@ -17,7 +17,7 @@ const DEP_TO_EXCLUDE = env.DEP_TO_EXCLUDE || ''
 fs.mkdirSync(opts.tmpDir, { recursive: true })
 
 
-// Step 1: We if the workers have finished their tasks (if their volume is empty)
+// Step 1: We if the workers have finished their tasks (if their volume is empty or their "todo" dir is empty or their "workdir" dir is empty)
 const workers = fs.readdirSync(opts.volumes)
 workers.forEach(worker =>{
     if (fs.readdirSync(path.join(opts.volumes, worker)).length > 0){
@@ -50,6 +50,16 @@ update_links.forEach(link =>{
     exec('mv', [path.join(opts.tmpDir, 'update_links', link), path.join(opts.volumes, worker, 'todo', link)])
     nb_tasks_per_worker[worker] += 1
 })
+
+
+// step 5: We remove the todo dir of the workers that have no tasks to remove confusion for the next run
+workers.forEach(worker =>{
+    if (nb_tasks_per_worker[worker] == 0){
+        exec('rm', ['-rf', path.join(opts.volumes, worker, 'todo')])
+    }
+})
+
+
 
 
 console.log('All tasks were dispatched to workers')

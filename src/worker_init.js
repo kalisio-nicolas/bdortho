@@ -94,7 +94,7 @@ process.on('SIGTERM', () => {
     console.log("Failed links:", get_num_failed())
     console.log("Done links:", get_num_done())
     console.log("Current link:", current_link)
-    slack_log(`*TEST_BDORTHO*: interrupting work on *${hostname}*, *[${get_num_total()}/${current_link ? 1 : 0}/${get_num_done()}/${get_num_failed()}]* (total/pending/success/failed).`, '#d15c21', slack_url)
+    slack_log(`*BDORTHO*: interrupting work on *${hostname}*, *[${get_num_total()}/${current_link ? 1 : 0}/${get_num_done()}/${get_num_failed()}]* (total/pending/success/failed).`, '#d15c21', slack_url)
 
     // We kill the worker process
     exec('pkill', ['-f', 'worker_process.js'])
@@ -142,7 +142,7 @@ async function main(){
     current_link=get_new_link()
     if (current_link){
         console.log("Starting worker process...")
-        slack_log(`*TEST_BDORTHO*: resuming work on *${hostname}*, *[${get_num_total()}/${current_link ? 1 : 0}/${get_num_done()}/${get_num_failed()}]* (total/pending/success/failed).`, '#d15c21', slack_url)
+        slack_log(`*BDORTHO*: resuming work on *${hostname}*, *[${get_num_total()}/${current_link ? 1 : 0}/${get_num_done()}/${get_num_failed()}]* (total/pending/success/failed).`, '#d15c21', slack_url)
     }
 
     while(current_link!=null){
@@ -157,18 +157,18 @@ async function main(){
             if (code == 0) {
                 console.log("Process for link", path.basename(current_link)," exited successfully")
                 add_to_done(current_link)
-                slack_log(`*TEST_BDORTHO*: *${path.basename(current_link)}* done on *${hostname}* [${get_num_done()}/${get_num_total()}] (success/total).`, '#2eb886', slack_url)
+                slack_log(`*BDORTHO*: *${path.basename(current_link)}* done on *${hostname}* [${get_num_done()}/${get_num_total()}] (success/total).`, '#2eb886', slack_url)
             }
             else{
                 console.log("Process for link", path.basename(current_link)," exited with error: ", ERR_CODES[code] || code )
                 add_to_failed(current_link) 
-                slack_log(`*TEST_BDORTHO*: *${path.basename(current_link)}* failed on *${hostname}* with error: ${ERR_CODES[code] || code}, *[${get_num_total()}/${get_num_done()}/${get_num_failed()}]* (total/success/failed).`, '#d50200', slack_url)
+                slack_log(`*BDORTHO*: *${path.basename(current_link)}* failed on *${hostname}* with error: ${ERR_CODES[code] || code}, *[${get_num_total()}/${get_num_done()}/${get_num_failed()}]* (total/success/failed).`, '#d50200', slack_url)
             }
         }
         catch (e) {
             console.log("Process exited with an unknown error", e)
             add_to_failed(current_link)
-            slack_log(`*TEST_BDORTHO*: *${path.basename(current_link)}* failed on *${hostname}* *[${get_num_total()}/${get_num_done()}/${get_num_failed()}]* (total/success/failed).`, '#d50200', slack_url)
+            slack_log(`*BDORTHO*: *${path.basename(current_link)}* failed on *${hostname}* *[${get_num_total()}/${get_num_done()}/${get_num_failed()}]* (total/success/failed).`, '#d50200', slack_url)
         }
         current_link=get_new_link()
     }
