@@ -1,7 +1,4 @@
 # mychart/values.yaml
-
-nodeNames: ["node1", "node2"]
-
 fullnameOverride : ""
 nameOverride: ""
 
@@ -9,9 +6,10 @@ global:
   secret: "default" # secret name to use for the slack webhook url
   imagePullSecrets : []
   repository: "repo/bdortho"
+  rcloneSecret : ""
   tag: "latest"
   pullPolicy: Always
-  storageClass: "nfs-csi"
+  storageClass: ""
   env :
     TIMEZONE : "Europe/Paris" # Time Zone to elaborate the TTS
     TTS : "06:00" # Time To STOP
@@ -21,7 +19,7 @@ global:
 
 
 master :
-  cron: "0 20 * * *" # at 20:00
+  cron: "0 21 * * *" # at 21:00 UTC
   failedJobsHistoryLimit : 1
   successfulJobsHistoryLimit : 1
   backoffLimit : 0
@@ -29,15 +27,14 @@ master :
 
 
 worker: 
+  numberOfWorkers : 3 # Number of nodes in the cluster (excluding the master, exceeding the number of nodes will schedule multiple jobs on already scheduled nodes)
   storageSize : 50 # Gi, size of the pvc for each worker's workdir
-  cron: "3 20 * * *" # at 20:03
+  cron: "1 21 * * *" # at 21:01 UTC
   failedJobsHistoryLimit : 1
   successfulJobsHistoryLimit : 1
   backoffLimit : 0
   env :
-    JOBS : "3" # Number of jobs to run in parallel
-
-
+    JOBS : "3" # Number of jobs to run in parallel on each worker (gdaltranslate)
 
 
 
@@ -45,3 +42,6 @@ worker:
 podSecurityContext:
   runAsNonRoot: true
   runAsUser: 1000
+  fsGroup: 1000
+
+

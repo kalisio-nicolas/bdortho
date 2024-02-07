@@ -1,9 +1,11 @@
-{{- $nodeNames := .Values.nodeNames }}
-{{- range $nodeName := $nodeNames }}
+# On sauvegarde le contaxt actuelle dans une variable
+{{- $currentContext := . -}}
+{{- range $index := until ($.Values.worker.numberOfWorkers | int)}}
+{{- $index = add $index 1 }} # We need to start at 1
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ include "kargo.names.name" $ }}-{{ $nodeName }}-worker
+  name: {{ include "kargo.names.name" $ }}-worker-{{ $index}}
 spec:
   schedule: {{ $.Values.worker.cron }}
   concurrencyPolicy: Forbid
@@ -11,26 +13,34 @@ spec:
   successfulJobsHistoryLimit: {{ $.Values.worker.successfulJobsHistoryLimit | default 1 }}
   jobTemplate:
     spec:
+      
       backoffLimit: 0
       template:
         metadata:
           labels:
-            app: {{ include "kargo.names.name" $ }}-{{ $nodeName }}-pod
-        spec:   
+            app: {{ include "kargo.names.name" $ }}-pod
+        spec:
+          topologySpreadConstraints: 
+          - maxSkew: 1
+            topologyKey: "kubernetes.io/hostname"
+            whenUnsatisfiable: ScheduleAnyway
+            labelSelector:
+              matchLabels:
+                app: {{ include "kargo.names.name" $ }}-pod   
           restartPolicy: Never
           {{- with $.Values.podSecurityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
-          {{- end }}     
-          nodeSelector:
-            kubernetes.io/hostname: {{ $nodeName }}
+          {{- end }} 
+
+
           containers:
-          - name: {{ include "kargo.names.name" $ }}-{{ $nodeName }}-container
+          - name: {{ include "kargo.names.name" $ }}-container-{{ $index }}
             image: {{ $.Values.global.repository }}:{{ $.Values.global.tag }}
             imagePullPolicy: {{ $.Values.global.pullPolicy }}
             env:
             - name: HOSTNAME
-              value: {{ $nodeName }}
+              value: worker-{{ $index }}
             - name: ROLE
               value: "worker"              
             - name: VOLUMES
@@ -39,17 +49,27 @@ spec:
             {{- include "kargo.environment.render" (dict "env" $.Values.worker.env "context" $) | indent 12 }}
 
             volumeMounts:
-            - name: {{ $nodeName }}-bdortho-data
+            - name: bdortho-volume-{{ $index }}
               mountPath: /data
-            - name: bdortho-bucket
-              mountPath: /bucket
+            {{- if $.Values.global.rcloneSecret }}
+            - name: rclone-config
+              mountPath: /.rclone.conf
+              subPath: rclone.conf
+              readOnly: true
+            {{- end }}
+              
 
           volumes:
-          - name: {{ $nodeName }}-bdortho-data
+          - name: bdortho-volume-{{ $index }}
             persistentVolumeClaim:
-              claimName: {{ $nodeName }}-bdortho-pvc
-          - name: bdortho-bucket
-            persistentVolumeClaim:
-              claimName: bdortho-bucket-pvc
+              claimName: bdortho-pvc-{{ $index }}
+
+
+          {{- if $.Values.global.rcloneSecret }}
+          {{- include "kargo.rcloneConfig.renderVolume" ( dict "args" $.Values.global "context" $ ) | nindent 10 }}
+          {{- end }}
+
+              
 --- # Necessary to create multiple cronjobs
 {{- end }}
+

@@ -1,10 +1,10 @@
-{{- $nodeNames := .Values.nodeNames }}
-{{- range $nodeName := $nodeNames }}
+{{- range $index := until ($.Values.worker.numberOfWorkers | int)}}
+{{- $index = add $index 1 }} # We need to start at 1
 
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ $nodeName }}-bdortho-pvc
+  name: bdortho-pvc-{{ $index }}
   namespace: {{ $.Release.Namespace }}
 spec:
   accessModes:

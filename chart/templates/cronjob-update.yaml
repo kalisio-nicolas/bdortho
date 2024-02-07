@@ -29,25 +29,33 @@ spec:
             image: {{ $.Values.global.repository }}:{{ $.Values.global.tag | default "latest" }}
             imagePullPolicy: {{ $.Values.global.pullPolicy }}
             env:
+            - name: VOLUMES
+              value: "/data"
             - name: ROLE
               value: "master"
             {{- include "kargo.environment.render" (dict "env" $.Values.global.env "context" $) | indent 12 }}
             volumeMounts:
-            - name: bdortho-bucket
-              mountPath: /bucket
-{{- $nodeNames := .Values.nodeNames }}
-{{- range $nodeName := $nodeNames }}
-            - name: {{ $nodeName }}-bdortho-data
-              mountPath: /mnt/{{ $nodeName }}
+            {{- if $.Values.global.rcloneSecret }}
+            - name: rclone-config
+              mountPath: /.rclone.conf
+              subPath: rclone.conf
+              readOnly: true
+            {{- end }}
+        
+{{- range $index := until ($.Values.worker.numberOfWorkers | int)}}
+{{- $index = add $index 1 }} # We need to start at 1
+            - name: bdortho-data-{{ $index }}
+              mountPath: /data/{{ $index }}
 {{- end }}
           volumes:
-{{- range $nodeName := $nodeNames }}
-          - name: {{ $nodeName }}-bdortho-data
+{{- range $index := until ($.Values.worker.numberOfWorkers | int)}}
+{{- $index = add $index 1 }} # We need to start at 1
+          - name: bdortho-data-{{ $index }}
             persistentVolumeClaim:
-              claimName: {{ $nodeName }}-bdortho-pvc
+              claimName: bdortho-pvc-{{ $index }}
 {{- end }}
-          - name: bdortho-bucket
-            persistentVolumeClaim:
-              claimName: bdortho-bucket-pvc
+          {{- if $.Values.global.rcloneSecret }}
+          {{- include "kargo.rcloneConfig.renderVolume" ( dict "args" $.Values.global "context" $ ) | nindent 10 }}
+          {{- end }}
           
           
