@@ -17,7 +17,7 @@ const DEP_TO_EXCLUDE = env.DEP_TO_EXCLUDE || ''
 fs.mkdirSync(opts.tmpDir, { recursive: true })
 
 
-// Step 1: We if the workers have finished their tasks (if their volume is empty or their "todo" dir is empty or their "workdir" dir is empty)
+// Step 1: We if the workers have finished their tasks (if their volume is empty )
 const workers = fs.readdirSync(opts.volumes)
 workers.forEach(worker =>{
     if (fs.readdirSync(path.join(opts.volumes, worker)).length > 0){

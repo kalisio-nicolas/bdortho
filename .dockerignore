@@ -2,3 +2,4 @@ node_modules
 bucket
 volumes
 *.lock
+chart
