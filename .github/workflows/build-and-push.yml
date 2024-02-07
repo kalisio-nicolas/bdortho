@@ -43,48 +43,48 @@ jobs:
       - name: package Helm Chart
         run: helm package ./chart -d .
 
-      - name: Publish Helm Chart to ChartMuseum
-        id: publish
-        run: |
-          VERSION=$(cat ./chart/Chart.yaml | grep version | awk '{print $2}' | tr -d '[:space:]')
-          CHART_FILE=$(find . -name '*.tgz' -print -quit)
-          CHART_NAME=$(echo "$CHART_FILE" | sed 's/-[0-9]\+\.[0-9]\+\.[0-9]\+\.tgz$//')
-          echo "curl -s --data-binary \"@${CHART_FILE}\" \
-                    --url \"http://${{ secrets.HELM_REPO }}/api/charts\" \
-                    --header \"Authorization: Basic ${{ secrets.HELM_REPO_AUTH }}\""
+      # - name: Publish Helm Chart to ChartMuseum
+      #   id: publish
+      #   run: |
+      #     VERSION=$(cat ./chart/Chart.yaml | grep version | awk '{print $2}' | tr -d '[:space:]')
+      #     CHART_FILE=$(find . -name '*.tgz' -print -quit)
+      #     CHART_NAME=$(echo "$CHART_FILE" | sed 's/-[0-9]\+\.[0-9]\+\.[0-9]\+\.tgz$//')
+      #     echo "curl -s --data-binary \"@${CHART_FILE}\" \
+      #               --url \"http://${{ secrets.HELM_REPO }}/api/charts\" \
+      #               --header \"Authorization: Basic ${{ secrets.HELM_REPO_AUTH }}\""
                     
-          RESPONSE=$(curl -s --data-binary "@${CHART_FILE}" \
-                    --url "http://${{ secrets.HELM_REPO }}/api/charts" \
-                    --header "Authorization: Basic ${{ secrets.HELM_REPO_AUTH }}")
+      #     RESPONSE=$(curl -s --data-binary "@${CHART_FILE}" \
+      #               --url "http://${{ secrets.HELM_REPO }}/api/charts" \
+      #               --header "Authorization: Basic ${{ secrets.HELM_REPO_AUTH }}")
 
 
-          if [[ $RESPONSE == '{"saved":true}' ]]; then
-            echo "Chart successfully published."
-          elif [[ $RESPONSE == '{"error":"file already exists"}' ]]; then
-            echo "Chart already exists. Deleting and republishing..."
-            DELETE_RESPONSE=$(curl -s -X DELETE "http://${{ secrets.HELM_REPO }}/api/charts/$CHART_NAME/$VERSION" \
-                              --header "Authorization: Basic ${{ secrets.HELM_REPO_AUTH }}")
+      #     if [[ $RESPONSE == '{"saved":true}' ]]; then
+      #       echo "Chart successfully published."
+      #     elif [[ $RESPONSE == '{"error":"file already exists"}' ]]; then
+      #       echo "Chart already exists. Deleting and republishing..."
+      #       DELETE_RESPONSE=$(curl -s -X DELETE "http://${{ secrets.HELM_REPO }}/api/charts/$CHART_NAME/$VERSION" \
+      #                         --header "Authorization: Basic ${{ secrets.HELM_REPO_AUTH }}")
 
-            if [[ $DELETE_RESPONSE == '{"deleted":true}' ]]; then
-              echo "Chart successfully deleted."
-              RESPONSE=$(curl -s --data-binary "@${CHART_FILE}" \
-                    --url "http://${{ secrets.HELM_REPO }}/api/charts" \
-                    --header "Authorization: Basic ${{ secrets.HELM_REPO_AUTH }}")
+      #       if [[ $DELETE_RESPONSE == '{"deleted":true}' ]]; then
+      #         echo "Chart successfully deleted."
+      #         RESPONSE=$(curl -s --data-binary "@${CHART_FILE}" \
+      #               --url "http://${{ secrets.HELM_REPO }}/api/charts" \
+      #               --header "Authorization: Basic ${{ secrets.HELM_REPO_AUTH }}")
       
-              if [[ $RESPONSE == '{"saved":true}' ]]; then
-                echo "Chart successfully published."
-              else
-                echo "Error: $RESPONSE"
-                exit 1
-              fi
-            else
-              echo "Error deleting chart: $DELETE_RESPONSE"
-              exit 1
-            fi
-          else
-            echo "Error: $RESPONSE"
-            exit 1
-          fi
+      #         if [[ $RESPONSE == '{"saved":true}' ]]; then
+      #           echo "Chart successfully published."
+      #         else
+      #           echo "Error: $RESPONSE"
+      #           exit 1
+      #         fi
+      #       else
+      #         echo "Error deleting chart: $DELETE_RESPONSE"
+      #         exit 1
+      #       fi
+      #     else
+      #       echo "Error: $RESPONSE"
+      #       exit 1
+      #     fi
       
       # Create a new tag with the extracted version and push it to the repository
       - name: Create and Push Tag to GitHub Repository
