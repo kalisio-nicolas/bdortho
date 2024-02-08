@@ -2,11 +2,13 @@
 fullnameOverride : ""
 nameOverride: ""
 
-global:
+global :
   secret: "default" # secret name to use for the slack webhook url
+
+common:
   imagePullSecrets : []
-  repository: "repo/bdortho"
-  rcloneSecret : ""
+  repository: "harbor.portal.kalisio.com/kalisio/bdortho"
+  rcloneSecret : "rclone-config"
   tag: "latest"
   pullPolicy: Always
   storageClass: ""
@@ -34,7 +36,7 @@ worker:
   successfulJobsHistoryLimit : 1
   backoffLimit : 0
   env :
-    JOBS : "3" # Number of jobs to run in parallel on each worker (gdaltranslate)
+    JOBS : "1" # Number of jobs to run in parallel on each worker (gdaltranslate)
 
 
 

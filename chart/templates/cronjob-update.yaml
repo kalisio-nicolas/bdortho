@@ -20,22 +20,22 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}         
 
-          {{- with .Values.global.imagePullSecrets }}
+          {{- with .Values.common.imagePullSecrets }}
           imagePullSecrets:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           containers:
           - name: {{ include "kargo.names.name" . }}-update
-            image: {{ $.Values.global.repository }}:{{ $.Values.global.tag | default "latest" }}
-            imagePullPolicy: {{ $.Values.global.pullPolicy }}
+            image: {{ $.Values.common.repository }}:{{ $.Values.common.tag | default "latest" }}
+            imagePullPolicy: {{ $.Values.common.pullPolicy }}
             env:
             - name: VOLUMES
               value: "/data"
             - name: ROLE
               value: "master"
-            {{- include "kargo.environment.render" (dict "env" $.Values.global.env "context" $) | indent 12 }}
+            {{- include "kargo.environment.render" (dict "env" $.Values.common.env "context" $) | indent 12 }}
             volumeMounts:
-            {{- if $.Values.global.rcloneSecret }}
+            {{- if $.Values.common.rcloneSecret }}
             - name: rclone-config
               mountPath: /.rclone.conf
               subPath: rclone.conf
@@ -54,8 +54,8 @@ spec:
             persistentVolumeClaim:
               claimName: bdortho-pvc-{{ $index }}
 {{- end }}
-          {{- if $.Values.global.rcloneSecret }}
-          {{- include "kargo.rcloneConfig.renderVolume" ( dict "args" $.Values.global "context" $ ) | nindent 10 }}
+          {{- if $.Values.common.rcloneSecret }}
+          {{- include "kargo.rcloneConfig.renderVolume" ( dict "args" $.Values.common "context" $ ) | nindent 10 }}
           {{- end }}
           
           

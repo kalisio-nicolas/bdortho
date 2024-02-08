@@ -12,7 +12,7 @@ spec:
   resources:
     requests:
       storage: {{ $.Values.worker.storageSize }}Gi
-  storageClassName: {{ $.Values.global.storageClass }}
+  storageClassName: {{ $.Values.common.storageClass }}
   volumeMode: Filesystem
 ---
 {{- end }}

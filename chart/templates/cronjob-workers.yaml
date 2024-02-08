@@ -36,8 +36,8 @@ spec:
 
           containers:
           - name: {{ include "kargo.names.name" $ }}-container-{{ $index }}
-            image: {{ $.Values.global.repository }}:{{ $.Values.global.tag }}
-            imagePullPolicy: {{ $.Values.global.pullPolicy }}
+            image: {{ $.Values.common.repository }}:{{ $.Values.common.tag | default $.Chart.AppVersion }}"
+            imagePullPolicy: {{ $.Values.common.pullPolicy }}
             env:
             - name: HOSTNAME
               value: worker-{{ $index }}
@@ -45,13 +45,13 @@ spec:
               value: "worker"              
             - name: VOLUMES
               value: "/data"
-            {{- include "kargo.environment.render" (dict "env" $.Values.global.env "context" $) | indent 12 }}
+            {{- include "kargo.environment.render" (dict "env" $.Values.common.env "context" $) | indent 12 }}
             {{- include "kargo.environment.render" (dict "env" $.Values.worker.env "context" $) | indent 12 }}
 
             volumeMounts:
             - name: bdortho-volume-{{ $index }}
               mountPath: /data
-            {{- if $.Values.global.rcloneSecret }}
+            {{- if $.Values.common.rcloneSecret }}
             - name: rclone-config
               mountPath: /.rclone.conf
               subPath: rclone.conf
@@ -65,8 +65,8 @@ spec:
               claimName: bdortho-pvc-{{ $index }}
 
 
-          {{- if $.Values.global.rcloneSecret }}
-          {{- include "kargo.rcloneConfig.renderVolume" ( dict "args" $.Values.global "context" $ ) | nindent 10 }}
+          {{- if $.Values.common.rcloneSecret }}
+          {{- include "kargo.rcloneConfig.renderVolume" ( dict "args" $.Values.common "context" $ ) | nindent 10 }}
           {{- end }}
 
               
